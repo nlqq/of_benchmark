@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
+import os
 import oneflow as flow
 
 
@@ -34,6 +34,10 @@ def add_ofrecord_args(parser):
 
 
 def load_imagenet(args, batch_size, data_dir, data_part_num, codec):
+    if os.path.exists(data_dir):
+        print("Loading ImageNet data ......")
+    else:
+        raise Exception("Invalid imagenet data dir ", data_dir)
     image_blob_conf = flow.data.BlobConf(
         "encoded",
         shape=(args.image_size, args.image_size, 3),
@@ -84,6 +88,10 @@ def load_imagenet_for_training(args):
     output_layout="NHWC" if args.channel_last else "NCHW"
 
     color_space = 'RGB'
+    if os.path.exists(args.train_data_dir):
+        print("Loading train data from data dir ", args.train_data_dir)
+    else:
+        raise Exception("Invalid train data dir ", args.train_data_dir)
     ofrecord = flow.data.ofrecord_reader(args.train_data_dir,
                                         batch_size=train_batch_size,
                                         data_part_num=args.train_data_part_num,
@@ -114,6 +122,10 @@ def load_imagenet_for_validation(args):
     output_layout="NHWC" if args.channel_last else "NCHW"
 
     color_space = 'RGB'
+    if os.path.exists(args.val_data_dir):
+        print("Loading validation data from data dir ", args.val_data_dir)
+    else:
+        raise Exception("Invalid validation data dir ", args.val_data_dir)
     ofrecord = flow.data.ofrecord_reader(args.val_data_dir,
                                             batch_size=val_batch_size,
                                             data_part_num=args.val_data_part_num,
@@ -148,13 +160,12 @@ if __name__ == "__main__":
     #flow.config.enable_debug_mode(True)
     @flow.global_function(get_val_config(args))
     def IOTest():
-        if args.train_data_dir:
-            assert os.path.exists(args.train_data_dir)
-            print("Loading data from {}".format(args.train_data_dir))
-            (labels, images) = load_imagenet_for_training(args)
-        else:
+        if args.use_synthetic_data:
             print("Loading synthetic data.")
             (labels, images) = load_synthetic(args)
+        else:
+            print("Loading data from {}".format(args.train_data_dir))
+            (labels, images) = load_imagenet_for_training(args)
         outputs = {"images": images, "labels": labels}
         return outputs
 

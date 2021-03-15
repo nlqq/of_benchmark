@@ -71,14 +71,12 @@ def label_smoothing(labels, classes, eta, dtype):
 
 @flow.global_function("train", get_train_config(args))
 def TrainNet():
-    if args.train_data_dir:
-        assert os.path.exists(args.train_data_dir)
-        print("Loading data from {}".format(args.train_data_dir))
-        (labels, images) = ofrecord_util.load_imagenet_for_training(args)
-
-    else:
+    if args.use_synthetic_data:
         print("Loading synthetic data.")
         (labels, images) = ofrecord_util.load_synthetic(args)
+    else:
+        print("Loading data from {}".format(args.train_data_dir))
+        (labels, images) = ofrecord_util.load_imagenet_for_training(args)
     logits = model_dict[args.model](images, args)
     if args.label_smoothing > 0:
         one_hot_labels = label_smoothing(labels, args.num_classes, args.label_smoothing, logits.dtype)
@@ -98,7 +96,7 @@ def TrainNet():
 @flow.global_function("predict", get_val_config(args))
 def InferenceNet():
     if args.val_data_dir:
-        assert os.path.exists(args.val_data_dir)
+        #assert os.path.exists(args.val_data_dir)
         print("Loading data from {}".format(args.val_data_dir))
         (labels, images) = ofrecord_util.load_imagenet_for_validation(args)
 
@@ -121,7 +119,7 @@ def main():
 
     for epoch in range(args.num_epochs):
         metric = Metric(desc='train', calculate_batches=args.loss_print_every_n_iter,
-                        summary=summary, save_summary_steps=epoch_size,
+                        summary=summary, save_summary_steps=epoch_size*2,
                         batch_size=train_batch_size, loss_key='loss')
         for i in range(epoch_size):
             TrainNet().async_get(metric.metric_cb(epoch, i))

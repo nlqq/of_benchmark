@@ -60,7 +60,7 @@ def get_parser(parser=None):
         '--use_fp16',
         type=str2bool,
         nargs='?',
-        const=True,
+        const=False,
         help='Whether to use use fp16'
     )
     parser.add_argument(
@@ -86,6 +86,8 @@ def get_parser(parser=None):
     )
 
     # train and validaion
+    parser.add_argument("--use_synthetic_data", type=str2bool,
+    nargs="?", const=False, help="whether use synthetic data")
     parser.add_argument('--num_epochs', type=int,
                         default=90, help='number of epochs')
     parser.add_argument("--model_load_dir", type=str,
